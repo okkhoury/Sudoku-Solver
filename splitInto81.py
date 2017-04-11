@@ -11,7 +11,7 @@ import math
 sudokuImage = io.imread("sudoku.png")
 
 """ We should resize the image to 252x252. This would make each cell 28x28, which
-	is the exact size that the CNN"wants for classification"""
+	is the exact size that the CNN wants for classification"""
 	
 # Set height of original image
 height = 252
