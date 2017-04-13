@@ -4,7 +4,7 @@ from keras.models import model_from_json
 import numpy as np
 import skimage 
 from skimage import io
-
+import matplotlib.pyplot as plt
 
 # put this code in a function to make it cleaner
 def loadModel():
@@ -27,11 +27,14 @@ loaded_model = loadModel()
 # This is just a test image I found online
 zero = io.imread("zero.jpeg")
 
+
+# need to add a line of code to resize and scale the image to 28x28, so the the CNN can predict it
 def predictImageVal(numImage):
  
  	# Make sure that image is in the correct format. (1, 784)
 	numImage = skimage.color.rgb2grey(numImage)
-	numImage = np.resize(numImage, (28, 28)) # All images have to be input as 28x28
+	#numImage = np.resize(numImage, (28, 28)) # All images have to be input as 28x28
+
 	numImage = numImage.flatten(order='C') # This changes the size to (, 784)
 	numImage = np.resize(numImage, (784, 1)) # Puts image into correct shape: (1, 784)
 	numImage = np.transpose(numImage)
@@ -49,6 +52,7 @@ def predictImageVal(numImage):
 			maxVal = predMatrix[(0, col)]
 			maxIndex = counter
 		counter += 1
+
 	return maxIndex
 
 print(predictImageVal(zero))
