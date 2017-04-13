@@ -5,6 +5,7 @@ import numpy as np
 import skimage 
 from skimage import io
 import matplotlib.pyplot as plt
+from skimage import transform
 
 # put this code in a function to make it cleaner
 def loadModel():
@@ -25,22 +26,28 @@ def loadModel():
 loaded_model = loadModel()
 
 # This is just a test image I found online
-zero = io.imread("zero.jpeg")
-
+zero = io.imread("sevenHand.jpg")
 
 # need to add a line of code to resize and scale the image to 28x28, so the the CNN can predict it
 def predictImageVal(numImage):
- 
- 	# Make sure that image is in the correct format. (1, 784)
-	numImage = skimage.color.rgb2grey(numImage)
-	#numImage = np.resize(numImage, (28, 28)) # All images have to be input as 28x28
 
-	numImage = numImage.flatten(order='C') # This changes the size to (, 784)
-	numImage = np.resize(numImage, (784, 1)) # Puts image into correct shape: (1, 784)
-	numImage = np.transpose(numImage)
+	#Convert image to gray scale, resize it to 28x28, convert type to ubyte
+	numImage = skimage.color.rgb2grey(numImage)
+	numImage = transform.resize(numImage, (28,28))
+	numImage = skimage.img_as_ubyte(numImage)
+
+	#Our images are black text / white background, the model needs white text / black background. These lines invert the black/white
+	invertedImg = np.zeros((28,28))
+	invertedImg[numImage < 100] = 255
+	invertedImg[numImage >= 100] = 0
+
+	#Forms the image to the correct format to be read by the model
+	invertedImg = invertedImg.flatten(order='C')  
+	invertedImg = np.resize(invertedImg, (784,1))    # This changes the size to (, 784)
+	invertedImg = np.transpose(invertedImg)          # Puts image into correct shape: (1, 784)
 
 	# pass formatted image into neural net and get prediction matrix
-	predMatrix = loaded_model.predict(numImage)
+	predMatrix = loaded_model.predict(invertedImg)
 	print(predMatrix)
 
 	# Search the probability matrix to find the classifier with the highest probability
