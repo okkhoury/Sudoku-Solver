@@ -16,15 +16,21 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 from sklearn.preprocessing import normalize
 
+import matplotlib.pyplot as plt
 
 batch_size = 128
 num_classes = 10
-epochs = 20
+epochs = 25
 
 # the data, shuffled and split between train and test sets
 (x_train, y_train), (x_test, y_test) = mnist.load_data()
 
+print(x_train[0, :,:])
+plt.imshow(x_train[0, :,:], cmap='gray')
+plt.show()
+
 x_train = x_train.reshape(60000, 784)
+
 x_test = x_test.reshape(10000, 784)
 x_train = x_train.astype('float32')
 x_test = x_test.astype('float32')
@@ -39,11 +45,6 @@ print(y_test.shape)
 # convert class vectors to binary class matrices
 y_train = keras.utils.to_categorical(y_train, num_classes)
 y_test = keras.utils.to_categorical(y_test, num_classes)
-
-
-"""Only 1 layer with 10 outputs"""
-#model = Sequential()
-#model.add(Dense(10, activation='softmax', input_shape=(784,)))
 
 """2 hidden layers each with 256 neurons"""
 model = Sequential()
