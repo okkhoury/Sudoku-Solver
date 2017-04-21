@@ -28,6 +28,40 @@ loaded_model = loadModel()
 # This is just a test image I found online
 num = io.imread("sevenHand.jpg")
 
+sudokuImage = io.imread("sudoku.png")
+
+# Preprocess images so that they don't have boundaries
+def removeBoundries(numImage):
+	# Sum up the pixel values across each row, if the average pixel is 255, then it is a boundary, so zero it out
+
+	numImage = skimage.color.rgb2grey(numImage)
+
+	colSum = 0
+	for col in range(28):
+		for row in range(28):
+			colSum += numImage[(row, col)]
+
+		colSum = colSum / 26
+		#print(colSum)
+		if colSum >= 250:
+			for row2 in range(28):
+				numImage[(row2, col)] = 0
+
+	rowSum = 0
+	for row in range(28):
+		for col in range(28):
+			rowSum += numImage[(row, col)]
+
+		rowSum = rowSum / 28
+		print(rowSum)
+		if rowSum >= 220:
+			for col2 in range(28):
+				numImage[(row, col2)] = 0
+
+		rowSum = 0
+
+	return numImage
+
 # need to add a line of code to resize and scale the image to 28x28, so the the CNN can predict it
 def predictImageVal(numImage):
 
@@ -38,8 +72,14 @@ def predictImageVal(numImage):
 
 	#Our images are black text / white background, the model needs white text / black background. These lines invert the black/white
 	invertedImg = np.zeros((28,28))
-	invertedImg[numImage < 100] = 255
-	invertedImg[numImage >= 100] = 0
+	invertedImg[numImage < 170] = 255
+	invertedImg[numImage >= 170] = 0
+
+	# Take off white boundaries from inverted image
+	invertedImg = removeBoundries(invertedImg)
+
+	plt.imshow(invertedImg, cmap='gray')
+	plt.show()
 
 	#Forms the image to the correct format to be read by the model
 	invertedImg = invertedImg.flatten(order='C')  
@@ -61,9 +101,6 @@ def predictImageVal(numImage):
 		counter += 1
 
 	return maxIndex
-
-
-sudokuImage = io.imread("sudoku.png")
 
 # Take the inner section of each cell. If there are no white cells, then there's no number in it
 def isNumber(numImage):
@@ -103,10 +140,9 @@ height = 252
 cellHeight = 28
 cell = np.zeros((28, 28))
 
-
 # This produces all of the row and column range for the 81 different images
-for row in range(28, height + 1, cellHeight):
-	for col in range(28, height + 1, cellHeight):
+for row in range(28, height + 28, cellHeight):
+	for col in range(28, height + 28, cellHeight):
 
 		# wrap around to next row of cells
 		if prevCol == height:
@@ -122,10 +158,11 @@ for row in range(28, height + 1, cellHeight):
 			sudokuMatrix[(sudokuRow, sudokuCol)] = 10
 		else:
 			cellImage = sudokuImage[prevRow:row, prevCol:col]
-			cellImage = cellImage[5:25, 5:25]
-			#print(cellImage.shape)
-			plt.imshow(cellImage)
-			plt.show()
+			
+			cellImage = removeBoundries(cellImage)
+
+			cellImage = cellImage[2:25, 2:25]
+		
 			sudokuMatrix[(sudokuRow, sudokuCol)] = predictImageVal(cellImage)
 
 		prevCol = col
@@ -140,7 +177,6 @@ for row in range(9):
 		print(sudokuMatrix[(row, col)], )
 	print()
 
-#print(sudokuMatrix)
 
 
 
