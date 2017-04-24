@@ -4,7 +4,7 @@ from keras.models import model_from_json
 import numpy as np
 import skimage 
 from skimage import io
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 from skimage import transform
 
 # put this code in a function to make it cleaner
@@ -28,7 +28,11 @@ loaded_model = loadModel()
 # This is just a test image I found online
 num = io.imread("sevenHand.jpg")
 
-sudokuImage = io.imread("sudoku.png")
+print()
+
+sudokuImage = input("Please enter name of sudoku image file: ")
+
+sudokuImage = io.imread(sudokuImage)
 
 # Preprocess images so that they don't have boundaries
 def removeBoundries(numImage):
@@ -53,7 +57,7 @@ def removeBoundries(numImage):
 			rowSum += numImage[(row, col)]
 
 		rowSum = rowSum / 28
-		print(rowSum)
+		#print(rowSum)
 		if rowSum >= 220:
 			for col2 in range(28):
 				numImage[(row, col2)] = 0
@@ -78,8 +82,8 @@ def predictImageVal(numImage):
 	# Take off white boundaries from inverted image
 	invertedImg = removeBoundries(invertedImg)
 
-	plt.imshow(invertedImg, cmap='gray')
-	plt.show()
+	# plt.imshow(invertedImg, cmap='gray')
+	# plt.show()
 
 	#Forms the image to the correct format to be read by the model
 	invertedImg = invertedImg.flatten(order='C')  
@@ -172,15 +176,57 @@ for row in range(28, height + 28, cellHeight):
 	prevRow = row 
 
 
-for row in range(9):
-	for col in range(9):
-		print(sudokuMatrix[(row, col)], )
+def displayMatrix():
+	print()
+	print()
+	colCount = 1
+	print("C0", end='')
+	for col in range(8):
+		colNum = "C" + str(colCount)
+		print("   ", colNum, end='')
+		colCount += 1
+	print()
+
+	rowCount = 0
+	for row in range(9):
+		for col in range(9):
+			print(sudokuMatrix[(row, col)], " ", end='')
+
+		rowNum = "R" + str(rowCount)
+		print(" ", rowNum, end='')
+		rowCount += 1
+		print()
+
+	print()
 	print()
 
 
+#displayMatrix()
+
+def getCorrectMatrixFromUser():
+	isCorrect = False
+
+	displayMatrix()
+
+	while not isCorrect:
+
+		userInput = input("If any of these values are wrong, enter the correct value in the form Row, Col, correct value. Ex: 4,3,7. Enter q to finish: ")
+
+		if userInput == "q":
+			isCorrect = True
+
+		else:
+			values = userInput.split(",")
+			row = int(values[0])
+			col = int(values[1])
+			replacementVal = int(values[2])
+			print(row, col, replacementVal)
+			sudokuMatrix[(row, col)] = replacementVal
+
+		displayMatrix()
 
 
-
+getCorrectMatrixFromUser()
 
 
 
