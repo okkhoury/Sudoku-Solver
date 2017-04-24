@@ -4,8 +4,11 @@ from keras.models import model_from_json
 import numpy as np
 import skimage 
 from skimage import io
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from skimage import transform
+from skimage.morphology import skeletonize_3d
+import scipy
+from scipy.ndimage.filters import gaussian_filter
 
 # put this code in a function to make it cleaner
 def loadModel():
@@ -82,8 +85,15 @@ def predictImageVal(numImage):
 	# Take off white boundaries from inverted image
 	invertedImg = removeBoundries(invertedImg)
 
-	# plt.imshow(invertedImg, cmap='gray')
-	# plt.show()
+	invertedImg = invertedImg / 255
+
+	#invertedImg = skimage.morphology.skeletonize_3d(invertedImg)
+
+	# Smooth the image with a gussian blur
+	invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
+
+	plt.imshow(invertedImg, cmap='gray')
+	plt.show()
 
 	#Forms the image to the correct format to be read by the model
 	invertedImg = invertedImg.flatten(order='C')  
@@ -199,7 +209,6 @@ def displayMatrix():
 
 	print()
 	print()
-
 
 #displayMatrix()
 
