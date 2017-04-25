@@ -92,8 +92,8 @@ def predictImageVal(numImage):
 	# Smooth the image with a gussian blur
 	invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
 
-	plt.imshow(invertedImg, cmap='gray')
-	plt.show()
+	# plt.imshow(invertedImg, cmap='gray')
+	# plt.show()
 
 	#Forms the image to the correct format to be read by the model
 	invertedImg = invertedImg.flatten(order='C')  
@@ -169,7 +169,7 @@ for row in range(28, height + 28, cellHeight):
 		cell = sudokuImage[prevRow:row, prevCol:col]
 
 		if not isNumber(cell):
-			sudokuMatrix[(sudokuRow, sudokuCol)] = 10
+			sudokuMatrix[(sudokuRow, sudokuCol)] = 0
 		else:
 			cellImage = sudokuImage[prevRow:row, prevCol:col]
 			
@@ -193,7 +193,7 @@ def displayMatrix():
 	print("C0", end='')
 	for col in range(8):
 		colNum = "C" + str(colCount)
-		print("   ", colNum, end='')
+		print("  ", colNum, end='')
 		colCount += 1
 	print()
 
