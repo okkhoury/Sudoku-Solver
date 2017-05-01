@@ -6,6 +6,11 @@ import skimage
 from skimage import io
 import matplotlib.pyplot as plt
 from skimage import transform
+from skimage.morphology import skeletonize_3d
+import scipy
+from scipy.ndimage.filters import gaussian_filter
+
+#### 1260 x 1260 ###
 
 # put this code in a function to make it cleaner
 def loadModel():
@@ -25,10 +30,15 @@ def loadModel():
 
 loaded_model = loadModel()
 
-# This is just a test image I found online
-num = io.imread("sevenHand.jpg")
+sudokuImage = input("Please enter name of sudoku image file: ")
 
-sudokuImage = io.imread("sudoku.png")
+sudokuImage = io.imread(sudokuImage)
+
+# These values set the size that the image is scaled to. We can modify for every input
+height = 1512
+cellHeight = 168
+
+sudokuImage = transform.resize(sudokuImage, (height,height))
 
 # Preprocess images so that they don't have boundaries
 def removeBoundries(numImage):
@@ -53,7 +63,7 @@ def removeBoundries(numImage):
 			rowSum += numImage[(row, col)]
 
 		rowSum = rowSum / 28
-		print(rowSum)
+		#print(rowSum)
 		if rowSum >= 220:
 			for col2 in range(28):
 				numImage[(row, col2)] = 0
@@ -78,8 +88,13 @@ def predictImageVal(numImage):
 	# Take off white boundaries from inverted image
 	invertedImg = removeBoundries(invertedImg)
 
-	plt.imshow(invertedImg, cmap='gray')
-	plt.show()
+	invertedImg = invertedImg / 255
+
+	# Smooth the image with a gussian blur
+	invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
+
+	# plt.imshow(invertedImg, cmap='gray')
+	# plt.show()
 
 	#Forms the image to the correct format to be read by the model
 	invertedImg = invertedImg.flatten(order='C')  
@@ -136,13 +151,13 @@ sudokuRow = 0
 sudokuMatrix = np.zeros((81, 81))
 
 # Set height of original image. Set height of cell 
-height = 252
-cellHeight = 28
-cell = np.zeros((28, 28))
+# height = 1260
+# cellHeight = 140
+cell = np.zeros((cellHeight, cellHeight))
 
 # This produces all of the row and column range for the 81 different images
-for row in range(28, height + 28, cellHeight):
-	for col in range(28, height + 28, cellHeight):
+for row in range(cellHeight, height + cellHeight, cellHeight):
+	for col in range(cellHeight, height + cellHeight, cellHeight):
 
 		# wrap around to next row of cells
 		if prevCol == height:
@@ -154,10 +169,28 @@ for row in range(28, height + 28, cellHeight):
 
 		cell = sudokuImage[prevRow:row, prevCol:col]
 
+		# This is for displaying how the images look after inversion, but before resizing
+
+		# cell2 = np.copy(cell)
+		# cell2 = skimage.color.rgb2grey(cell2)
+		# cell2 = skimage.img_as_ubyte(cell2)
+
+		# invertedImg = np.zeros((cellHeight,cellHeight))
+		# invertedImg[cell2 < 170] = 255
+		# invertedImg[cell2 >= 170] = 0
+
+		# plt.imshow(invertedImg, cmap='gray')
+		# plt.show()
+
+
+		cell = transform.resize(cell, (28,28))
+
 		if not isNumber(cell):
-			sudokuMatrix[(sudokuRow, sudokuCol)] = 10
+			sudokuMatrix[(sudokuRow, sudokuCol)] = 0
 		else:
 			cellImage = sudokuImage[prevRow:row, prevCol:col]
+
+			cellImage = transform.resize(cellImage, (28,28))
 			
 			cellImage = removeBoundries(cellImage)
 
@@ -172,15 +205,56 @@ for row in range(28, height + 28, cellHeight):
 	prevRow = row 
 
 
-for row in range(9):
-	for col in range(9):
-		print(sudokuMatrix[(row, col)], )
+def displayMatrix():
+	print()
+	print()
+	colCount = 1
+	print("C0", end='')
+	for col in range(8):
+		colNum = "C" + str(colCount)
+		print("  ", colNum, end='')
+		colCount += 1
 	print()
 
+	rowCount = 0
+	for row in range(9):
+		for col in range(9):
+			print(sudokuMatrix[(row, col)], " ", end='')
+
+		rowNum = "R" + str(rowCount)
+		print(" ", rowNum, end='')
+		rowCount += 1
+		print()
+
+	print()
+	print()
+
+#displayMatrix()
+
+def getCorrectMatrixFromUser():
+	isCorrect = False
+
+	displayMatrix()
+
+	while not isCorrect:
+
+		userInput = input("If any of these values are wrong, enter the correct value in the form Row, Col, correct value. Ex: 4,3,7. Enter q to finish: ")
+
+		if userInput == "q":
+			isCorrect = True
+
+		else:
+			values = userInput.split(",")
+			row = int(values[0])
+			col = int(values[1])
+			replacementVal = int(values[2])
+			print(row, col, replacementVal)
+			sudokuMatrix[(row, col)] = replacementVal
+
+		displayMatrix()
 
 
-
-
+getCorrectMatrixFromUser()
 
 
 
