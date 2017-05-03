@@ -10,6 +10,8 @@ from skimage.morphology import skeletonize_3d
 import scipy
 from scipy.ndimage.filters import gaussian_filter
 
+#### 1260 x 1260 ###
+
 # put this code in a function to make it cleaner
 def loadModel():
 	# load json and create model
@@ -28,14 +30,15 @@ def loadModel():
 
 loaded_model = loadModel()
 
-# This is just a test image I found online
-num = io.imread("sevenHand.jpg")
-
-print()
-
 sudokuImage = input("Please enter name of sudoku image file: ")
 
 sudokuImage = io.imread(sudokuImage)
+
+# These values set the size that the image is scaled to. We can modify for every input
+height = 1512
+cellHeight = 168
+
+sudokuImage = transform.resize(sudokuImage, (height,height))
 
 # Preprocess images so that they don't have boundaries
 def removeBoundries(numImage):
@@ -86,8 +89,6 @@ def predictImageVal(numImage):
 	invertedImg = removeBoundries(invertedImg)
 
 	invertedImg = invertedImg / 255
-
-	#invertedImg = skimage.morphology.skeletonize_3d(invertedImg)
 
 	# Smooth the image with a gussian blur
 	invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
@@ -150,13 +151,13 @@ sudokuRow = 0
 sudokuMatrix = np.zeros((81, 81))
 
 # Set height of original image. Set height of cell 
-height = 252
-cellHeight = 28
-cell = np.zeros((28, 28))
+# height = 1260
+# cellHeight = 140
+cell = np.zeros((cellHeight, cellHeight))
 
 # This produces all of the row and column range for the 81 different images
-for row in range(28, height + 28, cellHeight):
-	for col in range(28, height + 28, cellHeight):
+for row in range(cellHeight, height + cellHeight, cellHeight):
+	for col in range(cellHeight, height + cellHeight, cellHeight):
 
 		# wrap around to next row of cells
 		if prevCol == height:
@@ -168,10 +169,28 @@ for row in range(28, height + 28, cellHeight):
 
 		cell = sudokuImage[prevRow:row, prevCol:col]
 
+		# This is for displaying how the images look after inversion, but before resizing
+
+		# cell2 = np.copy(cell)
+		# cell2 = skimage.color.rgb2grey(cell2)
+		# cell2 = skimage.img_as_ubyte(cell2)
+
+		# invertedImg = np.zeros((cellHeight,cellHeight))
+		# invertedImg[cell2 < 170] = 255
+		# invertedImg[cell2 >= 170] = 0
+
+		# plt.imshow(invertedImg, cmap='gray')
+		# plt.show()
+
+
+		cell = transform.resize(cell, (28,28))
+
 		if not isNumber(cell):
 			sudokuMatrix[(sudokuRow, sudokuCol)] = 0
 		else:
 			cellImage = sudokuImage[prevRow:row, prevCol:col]
+
+			cellImage = transform.resize(cellImage, (28,28))
 			
 			cellImage = removeBoundries(cellImage)
 
