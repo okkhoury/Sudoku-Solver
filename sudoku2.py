@@ -86,8 +86,6 @@ def formatImageMnist(image):
 
 	newImage = skimage.color.rgb2grey(newImage)
 
-	print(newImage.shape)
-
 	for row in range(newImage.shape[0]):
 		rowSum = 0
 		for col in range(newImage.shape[1]):
@@ -129,7 +127,6 @@ def formatImageMnist(image):
 	count = 0
 	for col in colsToRemove:
 		delta = col - prevCol
-		print("Delta: ", delta, "Index: ", largestIndex)
 		if delta > largest_delta:
 			largest_delta = delta
 			largestIndex = count
@@ -137,15 +134,7 @@ def formatImageMnist(image):
 		prevCol = col
 		count += 1
 
-	for col in colsToRemove:
-		print(col)
-
-	print("li ", largestIndex)
-
-	print(colsToRemove[largestIndex-1], colsToRemove[largestIndex])
-
 	newImage = newImage[:, colsToRemove[largestIndex-1]:colsToRemove[largestIndex]]
-
 
 	#Scale the image down so that the height is 20 pixels
 	heightWidthRatio = newImage.shape[0] / newImage.shape[1]
@@ -154,7 +143,6 @@ def formatImageMnist(image):
 	#Force newWidth to be even. makes the math easier
 	if newWidth % 2 != 0:
 		newWidth -= 1
-
 
 	newImage = transform.resize(newImage, (20, newWidth))
 
@@ -238,8 +226,6 @@ sudokuMatrix = np.zeros((81, 81))
 # cellHeight = 140
 cell = np.zeros((cellHeight, cellHeight))
 
-
-
 # This produces all of the row and column range for the 81 different images
 for row in range(cellHeight, height + cellHeight, cellHeight):
 	for col in range(cellHeight, height + cellHeight, cellHeight):
@@ -268,8 +254,8 @@ for row in range(cellHeight, height + cellHeight, cellHeight):
 
 			#Our images are black text / white background, the model needs white text / black background. These lines invert the black/white
 			invertedImg = np.zeros((cellImage.shape[0], cellImage.shape[1]))
-			invertedImg[cellImage < 150] = 255
-			invertedImg[cellImage >= 150] = 0
+			invertedImg[cellImage < 100] = 255
+			invertedImg[cellImage >= 100] = 0
 
 			invertedImg = removeBoundries(invertedImg)
 
@@ -284,8 +270,6 @@ for row in range(cellHeight, height + cellHeight, cellHeight):
 		sudokuCol += 1
 	sudokuRow += 1
 	prevRow = row 
-
-
 
 def displayMatrix():
 	print()
@@ -310,8 +294,6 @@ def displayMatrix():
 
 	print()
 	print()
-
-#displayMatrix()
 
 def getCorrectMatrixFromUser():
 	isCorrect = False
