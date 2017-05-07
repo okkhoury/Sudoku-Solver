@@ -75,6 +75,8 @@ def removeBoundries(numImage):
 
 def formatImageMnist(image):
 
+	print("IMAGE: ", image.shape)
+
 	""" This code works by finding every row and column that is 
 		almost entirely black and removing it from the image, so that
 		just the image remains """
@@ -144,7 +146,14 @@ def formatImageMnist(image):
 	if newWidth % 2 != 0:
 		newWidth -= 1
 
+	if newWidth == 0:
+		newWidth = 2
+
 	newImage = transform.resize(newImage, (20, newWidth))
+
+	if (newWidth > 20):
+		return np.zeros((28, 28))
+
 
 	# Add padding to newImage, so that the final image is padded with black pixels
 	paddedImage = np.zeros((28, 28))
