@@ -30,6 +30,8 @@ def loadModel():
 
 loaded_model = loadModel()
 
+print()
+print()
 sudokuImage = input("Please enter name of sudoku image file: ")
 
 sudokuImage = io.imread(sudokuImage)
@@ -43,55 +45,134 @@ sudokuImage = transform.resize(sudokuImage, (height,height))
 # Preprocess images so that they don't have boundaries
 def removeBoundries(numImage):
 	# Sum up the pixel values across each row, if the average pixel is 255, then it is a boundary, so zero it out
-
 	numImage = skimage.color.rgb2grey(numImage)
 
+	height = numImage.shape[0]
+
 	colSum = 0
-	for col in range(28):
-		for row in range(28):
+	for col in range(height):
+		for row in range(height):
 			colSum += numImage[(row, col)]
 
-		colSum = colSum / 26
+		colSum = colSum / height
 		#print(colSum)
 		if colSum >= 250:
-			for row2 in range(28):
+			for row2 in range(height):
 				numImage[(row2, col)] = 0
 
 	rowSum = 0
-	for row in range(28):
-		for col in range(28):
+	for row in range(height):
+		for col in range(height):
 			rowSum += numImage[(row, col)]
 
-		rowSum = rowSum / 28
+		rowSum = rowSum / height
 		#print(rowSum)
 		if rowSum >= 220:
-			for col2 in range(28):
+			for col2 in range(height):
 				numImage[(row, col2)] = 0
 
 		rowSum = 0
 
 	return numImage
 
+def formatImageMnist(image):
+
+
+	""" This code works by finding every row and column that is 
+		almost entirely black and removing it from the image, so that
+		just the image remains """
+
+	rowsToRemove = list()
+	colsToRemove = list()
+
+	newImage = np.copy(image)
+
+	newImage = skimage.color.rgb2grey(newImage)
+
+	for row in range(newImage.shape[0]):
+		rowSum = 0
+		for col in range(newImage.shape[1]):
+			rowSum += newImage[(row, col)]
+
+		if rowSum < 50:
+			rowsToRemove.append(row)
+
+	prevRow = rowsToRemove[0]
+	largest_delta = 0
+	largestIndex = 0
+
+	count = 0
+	for row in rowsToRemove:
+		delta = row - prevRow
+		if delta > largest_delta:
+			largest_delta = delta
+			largestIndex = count
+
+		prevRow = row
+		count += 1
+
+	newImage = newImage[rowsToRemove[largestIndex-1]:rowsToRemove[largestIndex], :]
+
+
+	for col in range(newImage.shape[1]):
+		colSum = 0
+		for row in range(newImage.shape[0]):
+			colSum += newImage[(row, col)]
+
+		if colSum < 50:
+			colsToRemove.append(col)
+
+
+	prevCol = colsToRemove[0]
+	largest_delta = 0
+	largestIndex = 0
+
+	count = 0
+	for col in colsToRemove:
+		delta = col - prevCol
+		if delta > largest_delta:
+			largest_delta = delta
+			largestIndex = count
+
+		prevCol = col
+		count += 1
+
+	newImage = newImage[:, colsToRemove[largestIndex-1]:colsToRemove[largestIndex]]
+
+	#Scale the image down so that the height is 20 pixels
+	heightWidthRatio = newImage.shape[0] / newImage.shape[1]
+	newWidth = int(20 / heightWidthRatio)
+
+	#Force newWidth to be even. makes the math easier
+	if newWidth % 2 != 0:
+		newWidth -= 1
+
+	if newWidth == 0:
+		newWidth = 2
+
+	newImage = transform.resize(newImage, (20, newWidth))
+
+	if (newWidth > 20):
+		return np.zeros((28, 28))
+
+
+	# Add padding to newImage, so that the final image is padded with black pixels
+	paddedImage = np.zeros((28, 28))
+	paddedImage[:] = 0
+
+	widthPad = newWidth / 2
+
+	paddedImage[4:24, int(14-widthPad):int(14+widthPad)] = newImage
+
+	return paddedImage
+
 # need to add a line of code to resize and scale the image to 28x28, so the the CNN can predict it
-def predictImageVal(numImage):
-
-	#Convert image to gray scale, resize it to 28x28, convert type to ubyte
-	numImage = skimage.color.rgb2grey(numImage)
-	numImage = transform.resize(numImage, (28,28))
-	numImage = skimage.img_as_ubyte(numImage)
-
-	#Our images are black text / white background, the model needs white text / black background. These lines invert the black/white
-	invertedImg = np.zeros((28,28))
-	invertedImg[numImage < 170] = 255
-	invertedImg[numImage >= 170] = 0
-
-	# Take off white boundaries from inverted image
-	invertedImg = removeBoundries(invertedImg)
+def predictImageVal(invertedImg):
 
 	invertedImg = invertedImg / 255
 
 	# Smooth the image with a gussian blur
-	invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
+	#invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
 
 	# plt.imshow(invertedImg, cmap='gray')
 	# plt.show()
@@ -169,19 +250,6 @@ for row in range(cellHeight, height + cellHeight, cellHeight):
 
 		cell = sudokuImage[prevRow:row, prevCol:col]
 
-		# This is for displaying how the images look after inversion, but before resizing
-
-		# cell2 = np.copy(cell)
-		# cell2 = skimage.color.rgb2grey(cell2)
-		# cell2 = skimage.img_as_ubyte(cell2)
-
-		# invertedImg = np.zeros((cellHeight,cellHeight))
-		# invertedImg[cell2 < 170] = 255
-		# invertedImg[cell2 >= 170] = 0
-
-		# plt.imshow(invertedImg, cmap='gray')
-		# plt.show()
-
 
 		cell = transform.resize(cell, (28,28))
 
@@ -190,20 +258,28 @@ for row in range(cellHeight, height + cellHeight, cellHeight):
 		else:
 			cellImage = sudokuImage[prevRow:row, prevCol:col]
 
-			cellImage = transform.resize(cellImage, (28,28))
-			
-			cellImage = removeBoundries(cellImage)
+			#Convert image to gray scale, resize it to 28x28, convert type to ubyte
+			cellImage = skimage.color.rgb2grey(cellImage)
+			cellImage = skimage.img_as_ubyte(cellImage)
 
-			cellImage = cellImage[2:25, 2:25]
+			#Our images are black text / white background, the model needs white text / black background. These lines invert the black/white
+			invertedImg = np.zeros((cellImage.shape[0], cellImage.shape[1]))
+			invertedImg[cellImage < 100] = 255
+			invertedImg[cellImage >= 100] = 0
+
+			invertedImg = removeBoundries(invertedImg)
+
+			invertedImg = scipy.ndimage.filters.gaussian_filter(invertedImg, sigma=1)
+
+			invertedImg = formatImageMnist(invertedImg)
 		
-			sudokuMatrix[(sudokuRow, sudokuCol)] = predictImageVal(cellImage)
+			sudokuMatrix[(sudokuRow, sudokuCol)] = predictImageVal(invertedImg)
 
 		prevCol = col
 
 		sudokuCol += 1
 	sudokuRow += 1
 	prevRow = row 
-
 
 def displayMatrix():
 	print()
@@ -229,8 +305,6 @@ def displayMatrix():
 	print()
 	print()
 
-#displayMatrix()
-
 def getCorrectMatrixFromUser():
 	isCorrect = False
 
@@ -255,15 +329,4 @@ def getCorrectMatrixFromUser():
 
 
 getCorrectMatrixFromUser()
-
-
-
-
-
-
-
-
-
-
-
 
